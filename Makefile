@@ -131,25 +131,17 @@ result-using-var.txt: source.txt
 srcfiles := $(shell echo src/{00..99}.txt)
 
 # How do we make a text file in src?
-# First the folder must exist, so that's a dependency.
 # We define the filename using a "stem" with the % as a placeholder.
-# What this means is "any file named src/*.txt, but build src first"
-src/%.txt: src
+# What this means is "any file named src/*.txt"
+src/%.txt:
+	@# First things first, create the dir if it doesn't exist.
+	@# Prepend with @ because srsly who cares about dir creation
+	@[ -d src ] || mkdir src
 	@# then, we just echo some data into the file
 	@# The $* expands to the "stem" bit matched by %
 	@# So, we get a bunch of files with numeric names, containing their number
 	echo $* > $@
 
-# To build the directory, we'll just create it using mkdir
-src:
-	mkdir -p src
-
-# But wait, won't this build the directory each time?
-#
-# Nope, because Make is smart.  In the first run, it sees that the folder
-# doesn't exist, and makes it.  Then, it sees that nothing's changed, so it's
-# skipped.
-#
 # Try running `make src/00.txt` and `make src/01.txt` now.
 
 
@@ -166,17 +158,15 @@ src:
 # Try typing "make source" to make all this happen.
 source: $(srcfiles)
 
-#
+
 # So, to make a dest file, let's copy a source file into its destination.
 # Also, it has to create the destination folder first.
 #
 # The destination of any dest/*.txt file is the src/*.txt file with the
 # matching stem.  You could just as easily say that %.css depends on %.styl
-dest/%.txt: src/%.txt dest
+dest/%.txt: src/%.txt
+	@[ -d dest ] || mkdir dest
 	cp $< $@
-
-dest:
-	mkdir -p dest
 
 # So, this is great and all, but we don't want to type `make dest/#.txt`
 # 100 times!
@@ -232,4 +222,11 @@ test: kitty
 clean:
 	rm -rf *.txt src dest
 
-.PHONY: source destination clean test
+# What happens if there's an error!?  Let's say you're building stuff, and
+# one of the commands fails.  Make will tear down everything, and abort.
+badkitty:
+	$(MAKE) kitty # The special var $(MAKE) means "the make that's making this"
+	false # <-- this will fail
+	echo "should not get here"
+
+.PHONY: source destination clean test badkitty
