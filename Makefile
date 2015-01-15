@@ -112,6 +112,9 @@ result.txt: source.txt
 #     pipe in bash.  `head <foo.txt` is using the contents of
 #     foo.txt as the input.  Also the < points INto the $
 #
+# $^  This is the list of ALL input files, not just the first one.
+#     You can remember it because it's like $<, but turned up a notch.
+#
 # $?  All the input files that are newer than the target
 #     It's like a question. "Wait, why are you doing this?  What
 #     files changed to make this necessary?"
@@ -217,7 +220,7 @@ destination: $(destfiles)
 # posix system because cats are wonderful and a core part of UNIX.
 
 kitty: $(destfiles)
-	cat $(destfiles) > kitty
+	cat $^ > kitty
 
 # Note what's happening here:
 #
