@@ -114,6 +114,8 @@ result.txt: source.txt
 #
 # $^  This is the list of ALL input files, not just the first one.
 #     You can remember it because it's like $<, but turned up a notch.
+#     If a file shows up more than once in the input list for some reason,
+#     it's still only going to show one time in $^.
 #
 # $?  All the input files that are newer than the target
 #     It's like a question. "Wait, why are you doing this?  What
@@ -220,6 +222,8 @@ destination: $(destfiles)
 # posix system because cats are wonderful and a core part of UNIX.
 
 kitty: $(destfiles)
+	@# Remember, $< is the input file, but $^ is ALL the input files.
+	@# Cat them into the kitty.
 	cat $^ > kitty
 
 # Note what's happening here:
