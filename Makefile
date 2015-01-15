@@ -79,13 +79,13 @@ result.txt: source.txt
 #	@echo "building source.txt"
 #	echo "this is the source" > source.txt
 #
-#	Run `make result.txt` and you'll see it first creates source.txt, and then
-#	copies it to result.txt.  Try running `make result.txt` again, and you'll see
-#	that nothing happens!  That's because the dependency, source.txt, hasn't
-#	changed, so there's no need to re-build result.txt.
+# Run `make result.txt` and you'll see it first creates source.txt, and then
+# copies it to result.txt.  Try running `make result.txt` again, and you'll see
+# that nothing happens!  That's because the dependency, source.txt, hasn't
+# changed, so there's no need to re-build result.txt.
 #
-#	Run `touch source.txt`, or edit the file, and you'll see that
-#	`make result.txt` re-builds the file.
+# Run `touch source.txt`, or edit the file, and you'll see that
+# `make result.txt` re-builds the file.
 #
 #
 # Let's say that we were working on a project with 100 .c files, and each of
@@ -103,36 +103,62 @@ result.txt: source.txt
 # file and the output file.  Here are the special variables:
 #
 # $@  The file that is being made right now by this rule (aka the "target")
+#     You can remember this because it's like the "$@" list in a
+#     shell script.  @ is like a letter "a" for "arguments.
+#     When you type "make foo", then "foo" is the argument.
+#
 # $<  The input file (that is, the first prerequisite in the list)
+#     You can remember this becasue the < is like a file input
+#     pipe in bash.  `head <foo.txt` is using the contents of
+#     foo.txt as the input.  Also the < points INto the $
+#
 # $?  All the input files that are newer than the target
+#     It's like a question. "Wait, why are you doing this?  What
+#     files changed to make this necessary?"
+#
 # $$  A literal $ character inside of the rules section
+#     More dollar signs equals more cash money equals dollar sign.
+#
 # $*  The "stem" part that matched in the rule definition's % bit
+#     You can remember this because in make rules, % is like * on
+#     the shell, so $* is telling you what matched the pattern.
 #
-# You can also use the special syntax $(@D) and $(@F) to refer to just the dir
-# and file portions of $@, respectively.  $(<D) and $(<F) work the same way
-# on the $< variable.
+# You can also use the special syntax $(@D) and $(@F) to refer to
+# just the dir and file portions of $@, respectively.  $(<D) and
+# $(<F) work the same way on the $< variable.  You can do the D/F
+# trick on any variable that looks like a filename.
 #
-# So, our rule for result.txt could've been written like this instead:
+# There are a few other special variables, and we can define our own
+# as well.  Most of the other special variables, you'll never use, so
+# don't worry about them.
+#
+# So, our rule for result.txt could've been written like this
+# instead:
 
 result-using-var.txt: source.txt
 	@echo "buildling result-using-var.txt using the $$< and $$@ vars"
 	cp $< $@
 
-# Let's say that we had 100 source files, that we want to convert into 100
-# result files.  Rather than list them out one by one in the makefile, we can
-# use a bit of shell scripting to generate them, and save them in a variable.
+# Let's say that we had 100 source files, that we want to convert
+# into 100 result files.  Rather than list them out one by one in the
+# makefile, we can use a bit of shell scripting to generate them, and
+# save them in a variable.
 #
 # Note that make uses := for assignment instead of =
-# Also, usually you'd use `$(wildcard src/*.txt)` instead, since probably the
-# files would already exist in your project.  Since this is a tutorial, though
-# we're going to generate them using make.
-
-# This will execute the shell and run the program to generate a list of files.
+# I don't know why that is.  The sooner you accept that this isn't
+# bash/sh, the better.
+#
+# Also, usually you'd use `$(wildcard src/*.txt)` instead, since
+# probably the files would already exist in your project.  Since this
+# is a tutorial, though we're going to generate them using make.
+#
+# This will execute the shell program to generate a list of files.
 srcfiles := $(shell echo src/{00..99}.txt)
 
-# How do we make a text file in src?
+# How do we make a text file in the src dir?
 # We define the filename using a "stem" with the % as a placeholder.
-# What this means is "any file named src/*.txt"
+# What this means is "any file named src/*.txt", and it puts whatever
+# matches the "%" bit into the $* variable.
 src/%.txt:
 	@# First things first, create the dir if it doesn't exist.
 	@# Prepend with @ because srsly who cares about dir creation
@@ -146,14 +172,14 @@ src/%.txt:
 
 
 # To not have to run make for each file, we define a "phony" target that
-# depends on all of the srcfiles, and has no other rules.  It's good practice
-# to define your phony rules in a .PHONY declaration in the file.  (See the
-# .PHONY entry at the very bottom of this file.)
+# depends on all of the srcfiles, and has no other rules.  It's good
+# practice to define your phony rules in a .PHONY declaration in the file.
+# (See the .PHONY entry at the very bottom of this file.)
 #
-# Running `make source` will make ALL of the files in the src/ dir.  Before it
-# can make any of them, it'll first make the src/ dir itself.  Then it'll copy
-# the "stem" value (that is, the number in the filename matched by the %) into
-# the file, like the rule says above.
+# Running `make source` will make ALL of the files in the src/ dir.  Before
+# it can make any of them, it'll first make the src/ dir itself.  Then
+# it'll copy the "stem" value (that is, the number in the filename matched
+# by the %) into the file, like the rule says above.
 #
 # Try typing "make source" to make all this happen.
 source: $(srcfiles)
@@ -162,8 +188,9 @@ source: $(srcfiles)
 # So, to make a dest file, let's copy a source file into its destination.
 # Also, it has to create the destination folder first.
 #
-# The destination of any dest/*.txt file is the src/*.txt file with the
-# matching stem.  You could just as easily say that %.css depends on %.styl
+# The destination of any dest/*.txt file is the src/*.txt file with
+# the matching stem.  You could just as easily say that %.css depends
+# on %.styl
 dest/%.txt: src/%.txt
 	@[ -d dest ] || mkdir dest
 	cp $< $@
@@ -171,9 +198,10 @@ dest/%.txt: src/%.txt
 # So, this is great and all, but we don't want to type `make dest/#.txt`
 # 100 times!
 #
-# Let's create a "phony" target that depends on all of the destination files.
-# We can use the built-in pattern substitution "patsubst" so we don't
-# have to re-build the list.  This uses the same "stem" 
+# Let's create a "phony" target that depends on all the destination files.
+# We can use the built-in pattern substitution "patsubst" so we don't have
+# to re-build the list.  This patsubst function uses the same "stem"
+# concept explained above.
 
 destfiles := $(patsubst src/%.txt,dest/%.txt,$(srcfiles))
 destination: $(destfiles)
@@ -183,9 +211,10 @@ destination: $(destfiles)
 # if the file named "destination" exists if we have something that depends
 # on it later.
 #
-# Let's say that all of these dest files should be gathered up into a proper
-# compiled program.  Since this is a tutorial, we'll use the venerable feline
-# compiler called "cat", which is included in every posix system.
+# Let's say that all of these dest files should be gathered up into a
+# proper compiled program.  Since this is a tutorial, we'll use the
+# venerable feline compiler called "cat", which is included in every
+# posix system because cats are wonderful and a core part of UNIX.
 
 kitty: $(destfiles)
 	cat $(destfiles) > kitty
@@ -205,27 +234,31 @@ kitty: $(destfiles)
 #
 # Note that it is smart enough to re-build JUST the single destfile that
 # corresponds to the 25.txt file, and then concats them all to kitty.  It
-# *doesn't* re-generate EVERY source file, and then EVERY dest file, every time
+# *doesn't* re-generate EVERY source file, and then EVERY dest file,
+# every time
 
 
-# It's good practice to have a `test` target, because people will come to your
-# project, and if there's a Makefile, then they'll expect `make test` to do
-# something.
+# It's good practice to have a `test` target, because people will come to
+# your project, and if there's a Makefile, then they'll expect `make test`
+# to do something.
 #
 # We can't test the kitty unless it exists, so we have to depend on that.
 test: kitty
 	@echo "miao" && echo "tests all pass!"
 
-# Last but not least, `make clean` should always remove all of the stuff that
-# your makefile created, so that we can remove bad stuff if anything gets
-# corrupted or otherwise screwed up.
+# Last but not least, `make clean` should always remove all of the stuff
+# that your makefile created, so that we can remove bad stuff if anything
+# gets corrupted or otherwise screwed up.
 clean:
-	rm -rf *.txt src dest
+	rm -rf *.txt src dest kitty
 
 # What happens if there's an error!?  Let's say you're building stuff, and
-# one of the commands fails.  Make will tear down everything, and abort.
+# one of the commands fails.  Make will abort and refuse to proceed if any
+# of the commands exits with a non-zero error code.
+# To demonstrate this, we'll use the `false` program, which just exits with
+# a code of 1 and does nothing else.
 badkitty:
-	$(MAKE) kitty # The special var $(MAKE) means "the make that's making this"
+	$(MAKE) kitty # The special var $(MAKE) means "the make currently in use"
 	false # <-- this will fail
 	echo "should not get here"
 
